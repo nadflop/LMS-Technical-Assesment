@@ -1,49 +1,112 @@
 `timescale 1ns / 1ps
 module msg_parser #(
-  parameter MAX_MSG_BYTES = 32
+  parameter MAX_MSG_BYTES = 32,
+  parameter DATA_BYTES = 8
 )(
   output logic        s_tready,
   input  logic        s_tvalid,
   input  logic        s_tlast,
-  input  logic [63:0] s_tdata,
+  input  logic [8*DATA_BYTES-1:0] s_tdata,
   input  logic [7:0]  s_tkeep,
   input  logic        s_tuser, // Used as an error input signal, valid on tlast
 
   output logic                       msg_valid,   // High for one clock to output a message
   output logic [15:0]                msg_length,  // Length of the message
   output logic [8*MAX_MSG_BYTES-1:0] msg_data,    // Data with the LSB on [0]
-  output logic.                      msg_error,   // Output if issue with the message
+  output logic                       msg_error,   // Output if issue with the message
 
   input  logic clk,
   input  logic rst
 );
 
+//state register
+typedef enum bit [2:0] {IDLE, MODIFY_DATA, WRITE} stateType;
+stateType current_state;
+stateType next_state;
+
+//find out if output bus is wider
+parameter upsizing = MAX_MSG_BYTES > DATA_BYTES;
+
+//TODO: add counter logic and maybe set the data here (since data needs to be set on clk cycle)
+always_ff @(posedge clk, negedge rst) begin
+  if (!rst) begin
+    current_state <= IDLE;
+  end
+  else begin
+    current_state <= next_state;
+  end
+end
+
+//logic for AXI slave FSM
+always_comb begin
+  next_state = current_state;
+  case(current_state)
+    IDLE: begin
+      if (s_tvalid && s_tready) begin
+        if (upsizing) begin
+          next_state = MODIFY_DATA;
+        end
+        else begin
+          next_state = WRITE;
+        end
+      end
+      else begin
+        next_state = current_state;
+      end
+    end
+    MODIFY_DATA: begin
+      if (s_tvalid && s_tready) begin
+        if (!s_tlast) begin
+          next_state = current_state;
+        end
+        else begin
+          next_state = WRITE;
+        end
+      end
+      else begin
+        next_state = current_state;
+      end
+    end
+    WRITE: begin
+      if (s_tvalid && s_tready) begin
+        if (!s_tlast) begin
+          next_state = current_state;
+        end
+        else begin
+          next_state = IDLE;
+        end
+      end
+      else begin
+        next_state = IDLE;
+      end
+    end
+  endcase
+end
+
+//combinational logic to generate tready signal
+//TODO: data buffer logic with tkeep and upsizing
+always_comb begin
+  case(current_state)
+    IDLE: begin
+      s_tready = 1'b1;
+    end
+    MODIFY_DATA: begin
+      if (s_tlast) begin
+        s_tready = 1'b0;
+      end
+      else begin
+        s_tready = 1'b1;
+      end
+    end 
+    WRITE: begin
+      if (s_tlast) begin
+        s_tready = 1'b0;
+      end
+      else begin
+        s_tready = 1'b1;
+      end
+    end
+  endcase
+end
 
 endmodule
-
-/*
-Sample inputs:
-
-tvalid,tlast,tdata,tkeep,terror
-1,0,abcddcef_00080001,11111111,0
-1,1,00000000_630d658d,00001111,0
-1,0,045de506_000e0002,11111111,0
-1,0,03889560_84130858,11111111,0
-1,0,85468052_0008a5b0,11111111,0
-1,1,00000000_d845a30c,00001111,0
-1,0,62626262_00080008,11111111,0
-1,0,6868000c_62626262,11111111,0
-1,0,68686868_68686868,11111111,0
-1,0,70707070_000a6868,11111111,0
-1,0,000f7070_70707070,11111111,0
-1,0,7a7a7a7a_7a7a7a7a,11111111,0
-1,0,0e7a7a7a_7a7a7a7a,11111111,0
-1,0,4d4d4d4d_4d4d4d00,11111111,0
-1,0,114d4d4d_4d4d4d4d,11111111,0
-1,0,38383838_38383800,11111111,0
-1,0,38383838_38383838,11111111,0
-1,0,31313131_000b3838,11111111,0
-1,0,09313131_31313131,11111111,0
-1,0,5a5a5a5a_5a5a5a00,11111111,0
-1,1,00000000_00005a5a,00000011,0
-*/
