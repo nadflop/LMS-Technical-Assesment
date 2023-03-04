@@ -68,6 +68,7 @@ always_comb begin
       end
     end
     WRITE: begin
+      //TODO: add logic for upsizing
       if (s_tvalid && s_tready) begin
         if (!s_tlast) begin
           next_state = current_state;
@@ -91,14 +92,10 @@ always_comb begin
       s_tready = 1'b1;
     end
     MODIFY_DATA: begin
-      if (s_tlast) begin
-        s_tready = 1'b0;
-      end
-      else begin
-        s_tready = 1'b1;
-      end
+      s_tready = 1'b1;
     end 
     WRITE: begin
+      //TODO: add logic for upsizing
       if (s_tlast) begin
         s_tready = 1'b0;
       end
