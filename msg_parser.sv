@@ -1,14 +1,15 @@
 `timescale 1ns / 1ps
 module msg_parser #(
   parameter MAX_MSG_BYTES = 32, //data width
-  parameter DATA_BYTES = 8
+  parameter DATA_BYTES = 8,
+  parameter TKEEP_WIDTH = 8
 )(
   //inputs, outputs from AXI Slave interface
   output logic        s_tready,
   input  logic        s_tvalid,
   input  logic        s_tlast,
   input  logic [8*DATA_BYTES-1:0] s_tdata,
-  input  logic [7:0]  s_tkeep,
+  input  logic [TKEEP_WIDTH-1:0]  s_tkeep,
   input  logic        s_tuser, // Used as an error input signal, valid on tlast
   //outputs from Data Buffer
   output logic                       msg_valid,   // High for one clock to output a message
@@ -134,11 +135,12 @@ PKCT(
 //read: do the tkeep processing here (use for loop & if statement)
 //store: set msg_valid
 //error: tuser && tlast, set msg_error
-typedef enum bit [3:0] {WAIT, READ, ERROR, STORE} stateType;
+typedef enum bit [2:0] {WAIT, ERROR, STORE} stateType;
 stateType data_ctrl_current_state;
 stateType data_ctrl_next_state;
 
 logic [8*MAX_MSG_BYTES-1:0] msg_temp = '0;
+integer i;
 
 //state assignments for Data Controller
 always_ff @(posedge clk, negedge rst) begin
@@ -156,52 +158,54 @@ end
 always_comb begin
   data_ctrl_next_state = data_ctrl_current_state;
   case(data_ctrl_current_state)
-    WAIT:
+    WAIT: begin
       if (handshake) begin
         if (s_tlast && s_tuser) begin
           data_ctrl_next_state = ERROR;
         end
         else begin
-          data_ctrl_next_state = READ;
+          data_ctrl_next_state = STORE;
         end
       end
       else begin
         data_ctrl_next_state = data_ctrl_current_state;
       end
-    READ:
-      if (handshake) begin
-        if (s_tlast && s_tuser) begin
-          data_ctrl_next_state = ERROR;
-        end
-        else begin
-          data_ctrl_next_state = data_ctrl_current_state;
-        end
-      end
-      else begin
-        data_ctrl_next_state = STORE;
-      end
-    STORE:
+    end
+    STORE: begin
       if (s_tlast && s_tuser) begin
         data_ctrl_next_state = ERROR;
       end
       else begin
         data_ctrl_next_state = WAIT;
       end
+    end
     ERROR:
       data_ctrl_next_state =  WAIT;
   endcase
 end
 
-//TODO: output logic for Data Controller
+//output logic for Data Controller
 always_comb begin
   msg_temp = msg_data;
   msg_valid = 1'b0;
   msg_error = 1'b0;
   case(data_ctrl_current_state)
     WAIT:
-    READ:
-    STORE:
-    ERROR:
+    STORE: begin
+      msg_valid = 1'b1; 
+      for (i = 0; i < TKEEP_WIDTH; i = i + 1) begin
+        // {TKEEP_WIDTH{s_tkeep[i]}} ^~ s_tdata[(8i+7):8i]  
+        msg_temp[(8*i+7):8*i] = {TKEEP_WIDTH{s_tkeep[i]}} ^~ s_tdata[(8*i+7):8*i]; 
+      end
+      if (upsizing) begin
+        //set the remaining MSB bits to 0
+        msg_temp[8*MAX_MSG_BYTES-1:8*(TKEEP_WIDTH-1)+7] = '0;
+      end
+    end
+    ERROR: begin
+      msg_error = 1'b1;
+      msg_temp = '0;
+    end
   endcase
 end
 
