@@ -1,3 +1,32 @@
+`timescale 1ns / 1ps
+module tb_msg_parser();
+
+// Define parameters
+localparam CLOCK_PERIOD = 100;
+parameter TDATA_WIDTH = 64; //bits
+parameter MAX_PKT_LENGTH = 256;
+parameter MIN_PKT_LENGTH = 64;
+
+//DUT Inputs
+logic tb_clk;
+logic tb_rst;
+logic tb_tlast;
+logic [TDATA_WIDTH-1:0] tb_tdata;
+logic [7:0] tb_tkeep;
+logic tb_tuser;
+logic tb_tvalid;
+
+//DUT outputs
+logic tb_tready;
+logic tb_msg_valid;
+logic [15:0] tb_msg_length;
+logic [MAX_PKT_LENGTH-1:0] tb_msg_data;
+logic tb_msg_error;
+
+//Test bench debug signals
+integer tb_test_num;
+string tb_test_case;
+
 /*
 Sample inputs:
 
@@ -24,3 +53,26 @@ tvalid,tlast,tdata,tkeep,terror
 1,0,5a5a5a5a_5a5a5a00,11111111,0
 1,1,00000000_00005a5a,00000011,0
 */
+
+msg_parser DUT
+(
+  .s_tready(tb_tready),
+  .s_tvalid(tb_tvalid),
+  .s_tlast(tb_tlast),
+  .s_tdata(tb+tb_tdata),
+  .s_tkeep(tb_tkeep),
+  .s_tuser(tb_tuser),
+  .msg_valid(tb_msg_valid),
+  .msg_length(tb_msg_length), 
+  .msg_data(tb_msg_data),
+  .msg_error(tb_msg_error),   // Output if issue with the message
+  .clk(tb_clk),
+  .rst(tb_rst)
+);
+
+//TODO: add task for reset dut
+//add clkgen
+//do some assertion checks here
+//add logic to generate some of the signals like tvalid, tuser, tlast
+
+endmodule
