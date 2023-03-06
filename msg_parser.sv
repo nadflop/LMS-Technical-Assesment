@@ -23,6 +23,7 @@ module msg_parser #(
 //variables used by both blocks//
 parameter upsizing = MAX_MSG_BYTES > DATA_BYTES;
 logic handshake = s_tvalid && s_tready;
+logic clear_msg_count;
 
 //=====================AXI-ST SLAVE LOGIC=====================//
 //state register for AXI-ST slave FSM
@@ -88,12 +89,12 @@ end
 
 //output logic for AXI-ST Slave interface
 always_comb begin
-  clear_count = 1'b0;
+  clear_msg_count = 1'b0;
   s_tready = 1'b0;
   case(axi_current_state)
     IDLE: begin
       s_tready = 1'b1;
-      clear_count = 1'b1;
+      clear_msg_count = 1'b1;
     end
     MODIFY_DATA: begin
       s_tready = 1'b1;
@@ -110,9 +111,6 @@ always_comb begin
 end
 
 //=====================DATA BUFFER LOGIC=====================//
-
-//input, output to the msg counter (part of component in data buffer)
-logic clear_msg_count;
 logic msg_ready; //tdata is ready to be copy to msg_data?
 
 //Data Counter
@@ -135,9 +133,9 @@ PKCT(
 //read: do the tkeep processing here (use for loop & if statement)
 //store: set msg_valid
 //error: tuser && tlast, set msg_error
-typedef enum bit [2:0] {WAIT, ERROR, STORE} stateType;
-stateType data_ctrl_current_state;
-stateType data_ctrl_next_state;
+typedef enum bit [2:0] {WAIT, ERROR, STORE} dataStateType;
+dataStateType data_ctrl_current_state;
+dataStateType data_ctrl_next_state;
 
 logic [8*MAX_MSG_BYTES-1:0] msg_temp = '0;
 integer i;
@@ -190,13 +188,15 @@ always_comb begin
   msg_valid = 1'b0;
   msg_error = 1'b0;
   case(data_ctrl_current_state)
-    WAIT:
+    WAIT: begin
+    end
     STORE: begin
       msg_valid = 1'b1; 
       for (i = 0; i < TKEEP_WIDTH; i = i + 1) begin
         // {TKEEP_WIDTH{s_tkeep[i]}} ^~ s_tdata[(8i+7):8i]  
-        msg_temp[(8*i+7):8*i] = {TKEEP_WIDTH{s_tkeep[i]}} ^~ s_tdata[(8*i+7):8*i]; 
+        msg_temp[(8*i+7)+:8] = {TKEEP_WIDTH{s_tkeep[i]}} ^~ s_tdata[(8*i+7) +: 8]; 
       end
+      //msg_temp[8*MAX_MSG_BYTES]
       if (upsizing) begin
         //set the remaining MSB bits to 0
         msg_temp[8*MAX_MSG_BYTES-1:8*(TKEEP_WIDTH-1)+7] = '0;

@@ -7,7 +7,7 @@ module msg_counter
 	input logic rst,
 	input logic count_enable, //s_tvalid && s_tready
 	input logic clear, 
-	input logic [NUM_COUNT_BITS-1:0] rollover_val,
+	input logic [NUM_COUNT_BITS*2-1:0] rollover_val,
 	output logic [NUM_COUNT_BITS-1:0] msg_length,
 	output logic rollover_flag
 );
