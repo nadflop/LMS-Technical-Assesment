@@ -8,7 +8,6 @@ module axi_slave (
 	output logic clear_msg_count
 );
 
-logic handshake = s_tvalid && s_tready;
 //state register for AXI-ST slave FSM
 typedef enum bit [2:0] {IDLE, MODIFY_DATA, WRITE} stateType;
 stateType axi_current_state;
@@ -29,7 +28,7 @@ always_comb begin
   axi_next_state = axi_current_state;
   case(axi_current_state)
     IDLE: begin
-      if (handshake) begin
+      if (s_tvalid && s_tready) begin
         if (upsizing) begin
           axi_next_state = MODIFY_DATA;
         end
@@ -42,7 +41,7 @@ always_comb begin
       end
     end
     MODIFY_DATA: begin
-      if (handshake) begin
+      if (s_tvalid && s_tready) begin
         if (!s_tlast) begin
           axi_next_state = axi_current_state;
         end
@@ -55,7 +54,7 @@ always_comb begin
       end
     end
     WRITE: begin
-      if (handshake) begin
+      if (s_tvalid && s_tready) begin
         if (!s_tlast) begin
           axi_next_state = axi_current_state;
         end
