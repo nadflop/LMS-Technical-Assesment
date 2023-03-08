@@ -108,11 +108,11 @@ tvalid,tlast,tdata,tkeep,terror
 */
 
 //DUT portmap
-msg_parser DUT
+msg_parser
 #(
   .MAX_MSG_BYTES(MAX_PKT_LENGTH/8)
 )
-(
+DUT (
   .s_tready(tb_tready),
   .s_tvalid(tb_tvalid),
   .s_tlast(tb_tlast),
