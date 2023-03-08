@@ -2,7 +2,7 @@
 module tb_msg_parser();
 
 // Define parameters
-localparam CLOCK_PERIOD = 100;
+localparam CLOCK_PERIOD = 10;
 //localparam PROPAGATION_DELAY;
 parameter TDATA_WIDTH = 64; //bits
 parameter MAX_PKT_LENGTH = 256;
@@ -49,12 +49,12 @@ task reset_dut;
     @(negedge tb_clk);
   end
 endtask
-
-//clkgen
+//add clkgen block
 initial begin
-  tb_clk = 'b0;
+	tb_clk = 'b0;
+	tb_rst = 'b1;
 end
-initial forever #120ps tb_clk=~tb_clk;
+initial forever #(CLOCK_PERIOD) tb_clk=~tb_clk;
 
 //task to set input for msg_parser
 task set_input;
@@ -65,10 +65,19 @@ task set_input;
   input m_tuser;
   begin
     tb_tvalid = m_tvalid;
-    tb_tlast = m_tlast;
     tb_tdata = m_tdata;
     tb_tkeep = m_tkeep;
     tb_tuser = m_tuser;
+    if (m_tlast == 1'b1) begin
+	@(posedge tb_clk);
+	tb_tlast = m_tlast;
+	@(negedge tb_clk);
+	tb_tlast = ~m_tlast;
+    end
+    else begin
+	tb_tlast = m_tlast;
+    end
+    
   end
 endtask
 /*
@@ -100,11 +109,14 @@ tvalid,tlast,tdata,tkeep,terror
 
 //DUT portmap
 msg_parser DUT
+#(
+  .MAX_MSG_BYTES(MAX_PKT_LENGTH/8)
+)
 (
   .s_tready(tb_tready),
   .s_tvalid(tb_tvalid),
   .s_tlast(tb_tlast),
-  .s_tdata(tb+tb_tdata),
+  .s_tdata(tb_tdata),
   .s_tkeep(tb_tkeep),
   .s_tuser(tb_tuser),
   .msg_valid(tb_msg_valid),
@@ -121,28 +133,48 @@ msg_parser DUT
 //test bench main process
 initial begin
 	tb_test_case = "Initialization";
-	tb_test_num = -1;
-	//clear bus model
-	reset_dut();
-
+	tb_test_num = 0;
+	tb_rst = 1'b1;
+	#(0.25);
 	//*****************************************************************************
-	//Power-on-Reset Test Case
+	// Power-on-Reset Test Case
 	//*****************************************************************************
 	tb_test_case = "Power-on-Reset";
 	tb_test_num = tb_test_num + 1;
-
+	
+	set_input(1'b0, 1'b0, 64'h0, 8'b0, 1'b0);
 	reset_dut();
-
+	
+	#(0.25);
 	//*****************************************************************************
-	//
+	// First Data Packet
 	//*****************************************************************************
-	tb_test_case = "";
+	tb_test_case = "1st Data Stream";
 	tb_test_num = tb_test_num + 1;
+	set_input(1'b1, 1'b0, 64'habcddcef00080001, 8'b11111111, 1'b0);
+	#(0.25);
+	//*****************************************************************************
+	// Second Data Stream
+	//*****************************************************************************
+	tb_test_case = "2nd Data Stream";
+	tb_test_num = tb_test_num + 1;
+	set_input(1'b1, 1'b1, 64'h00000000630d658d, 8'b00001111, 1'b0);
+	#(0.25);	
+	//*****************************************************************************
+	// Third Data Stream
+	//*****************************************************************************
+	tb_test_case = "3rd Data Stream";
+	tb_test_num = tb_test_num + 1;
+	set_input(1'b1, 1'b0, 64'h045de506000e0002, 8'b11111111, 1'b0);
+	#(0.25);	
+	
+1,0,03889560_84130858,11111111,0
+1,0,85468052_0008a5b0,11111111,0
+1,1,00000000_d845a30c,00001111,0
 
-	//1,0,abcddcef_00080001,11111111,0
-	//1,1,00000000_630d658d,00001111,0
-	//send_stream(1'b1, 1'b0, 64'habcddcef00080001, 8'b11111111, 1'b0);
-	#400;
+
+	$stop;
+	
 
 end
 
