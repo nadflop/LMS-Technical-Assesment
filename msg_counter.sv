@@ -7,6 +7,7 @@ module msg_counter
 	input logic rst,
 	input logic s_tvalid,
 	input logic s_tready,
+	input logic count_en,
 	input logic clear, 
 	input logic [NUM_COUNT_BITS*2-1:0] rollover_val,
 	output logic [NUM_COUNT_BITS-1:0] msg_length,
@@ -35,14 +36,15 @@ module msg_counter
 			next_count = 0;
 			flag = 0;
 		end
-		if (s_tvalid && s_tready) begin //if handshake happens, start the count
+		//TODO: want to increment when in state STORE
+		if (s_tvalid && s_tready && count_en) begin //if handshake happens, start the count
 			if (rollover_flag == 1'b1) begin 
-				next_count = 1;
+				next_count = 0;
 			end
 			else begin
 				next_count = msg_length + 1'b1;
 			end
-			if ((msg_length + 1 == rollover_val) || (msg_length == rollover_val)) begin
+			if ((msg_length + 1 == rollover_val)) begin
 				flag = 1'b1;
 			end
 			else begin
