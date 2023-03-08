@@ -2,3 +2,5 @@
 .DS_Store
 a.out
 .DS_Store
+*.vvp
+.DS_Store
