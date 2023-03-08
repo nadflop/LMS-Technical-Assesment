@@ -3,6 +3,7 @@ module tb_msg_parser();
 
 // Define parameters
 localparam CLOCK_PERIOD = 100;
+//localparam PROPAGATION_DELAY;
 parameter TDATA_WIDTH = 64; //bits
 parameter MAX_PKT_LENGTH = 256;
 parameter MIN_PKT_LENGTH = 64;
@@ -26,6 +27,38 @@ logic tb_msg_error;
 //Test bench debug signals
 integer tb_test_num;
 string tb_test_case;
+
+// Task for standard DUT reset procedure
+task reset_dut;
+  begin
+    // Activate the reset
+    tb_rst = 1'b0;
+
+    // Maintain the reset for more than one cycle
+    @(posedge tb_clk);
+    @(posedge tb_clk);
+
+    // Wait until safely away from rising edge of the clock before releasing
+    @(negedge tb_clk);
+    tb_rst = 1'b1;
+
+    // Leave out of reset for a couple cycles before allowing other stimulus
+    // Wait for negative clock edges, 
+    // since inputs to DUT should normally be applied away from rising clock edges
+    @(negedge tb_clk);
+    @(negedge tb_clk);
+  end
+endtask
+//add clkgen block
+always begin
+  // Start with clock low to avoid false rising edge events at t=0
+  tb_clk = 1'b0;
+  // Wait half of the clock period before toggling clock value (maintain 50% duty cycle)
+  #50;
+  tb_clk = 1'b1;
+  // Wait half of the clock period before toggling clock value via rerunning the block (maintain 50% duty cycle)
+  #50;
+end
 
 /*
 Sample inputs:
@@ -54,6 +87,7 @@ tvalid,tlast,tdata,tkeep,terror
 1,1,00000000_00005a5a,00000011,0
 */
 
+//DUT portmap
 msg_parser DUT
 (
   .s_tready(tb_tready),
@@ -70,9 +104,36 @@ msg_parser DUT
   .rst(tb_rst)
 );
 
-//TODO: add task for reset dut
-//add clkgen
 //do some assertion checks here
 //add logic to generate some of the signals like tvalid, tuser, tlast
+
+//test bench main process
+initial begin
+	tb_test_case = "Initialization";
+	tb_test_num = -1;
+	//clear bus model
+	reset_dut();
+
+	//*****************************************************************************
+	//Power-on-Reset Test Case
+	//*****************************************************************************
+	tb_test_case = "Power-on-Reset";
+	tb_test_num = tb_test_num + 1;
+
+	reset_dut();
+
+	//*****************************************************************************
+	//
+	//*****************************************************************************
+	tb_test_case = "";
+	tb_test_num = tb_test_num + 1;
+
+	//1,0,abcddcef_00080001,11111111,0
+	//1,1,00000000_630d658d,00001111,0
+	//send_stream(1'b1, 1'b0, 64'habcddcef00080001, 8'b11111111, 1'b0);
+	#400;
+
+end
+
 
 endmodule
