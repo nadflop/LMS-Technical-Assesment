@@ -49,17 +49,28 @@ task reset_dut;
     @(negedge tb_clk);
   end
 endtask
-//add clkgen block
-always begin
-  // Start with clock low to avoid false rising edge events at t=0
-  tb_clk = 1'b0;
-  // Wait half of the clock period before toggling clock value (maintain 50% duty cycle)
-  #50;
-  tb_clk = 1'b1;
-  // Wait half of the clock period before toggling clock value via rerunning the block (maintain 50% duty cycle)
-  #50;
-end
 
+//clkgen
+initial begin
+  tb_clk = 'b0;
+end
+initial forever #120ps tb_clk=~tb_clk;
+
+//task to set input for msg_parser
+task set_input;
+  input m_tvalid;
+  input m_tlast;
+  input [TDATA_WIDTH-1:0] m_tdata;
+  input [7:0] m_tkeep;
+  input m_tuser;
+  begin
+    tb_tvalid = m_tvalid;
+    tb_tlast = m_tlast;
+    tb_tdata = m_tdata;
+    tb_tkeep = m_tkeep;
+    tb_tuser = m_tuser;
+  end
+endtask
 /*
 Sample inputs:
 
