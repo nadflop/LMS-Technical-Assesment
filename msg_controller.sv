@@ -30,7 +30,6 @@ dataStateType data_ctrl_current_state;
 dataStateType data_ctrl_next_state;
 
 logic [8*MAX_MSG_BYTES-1:0] msg_temp = '0;
-logic handshake = s_tvalid && s_tready;
 integer i;
 
 //state assignments for Data Controller
@@ -50,7 +49,7 @@ always_comb begin
   data_ctrl_next_state = data_ctrl_current_state;
   case(data_ctrl_current_state)
     WAIT: begin
-      if (handshake) begin
+      if (s_tvalid && s_tready) begin
         if (s_tlast && s_tuser) begin
           data_ctrl_next_state = ERROR;
         end
@@ -93,6 +92,7 @@ always_comb begin
         //set the remaining MSB bits to 0
         msg_temp[8*MAX_MSG_BYTES-1:8*(TKEEP_WIDTH-1)+7] = '0;
       end
+      
     end
     ERROR: begin
       msg_error = 1'b1;
