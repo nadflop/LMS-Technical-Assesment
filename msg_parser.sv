@@ -22,7 +22,6 @@ module msg_parser #(
 
 //variables used by both blocks//
 parameter upsizing = MAX_MSG_BYTES > DATA_BYTES;
-logic handshake = s_tvalid && s_tready;
 logic clear_msg_count;
 
 //=====================AXI-ST SLAVE LOGIC=====================//
@@ -46,7 +45,8 @@ msg_counter
 COUNTER(
   .clk(clk),
 	.rst(rst),
-	.count_enable(handshake),
+	.s_tvalid(s_tvalid),
+  .s_tready(s_tready),
 	.clear(clear_msg_count), 
 	.rollover_val(DATA_BYTES*8),
 	.msg_length(msg_length),
