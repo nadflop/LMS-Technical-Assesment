@@ -5,7 +5,8 @@ module msg_counter
 (
 	input logic clk,
 	input logic rst,
-	input logic count_enable, //s_tvalid && s_tready
+	input logic s_tvalid,
+	input logic s_tready,
 	input logic clear, 
 	input logic [NUM_COUNT_BITS*2-1:0] rollover_val,
 	output logic [NUM_COUNT_BITS-1:0] msg_length,
@@ -34,14 +35,14 @@ module msg_counter
 			next_count = 0;
 			flag = 0;
 		end
-		if (count_enable) begin //if handshake happens, start the count
+		if (s_tvalid && s_tready) begin //if handshake happens, start the count
 			if (rollover_flag == 1'b1) begin 
 				next_count = 1;
 			end
 			else begin
 				next_count = msg_length + 1'b1;
 			end
-			if ((msg_length + 1 == rollover_val) || (msg_length == 1 && rollover_val == 1)) begin
+			if ((msg_length + 1 == rollover_val) || (msg_length == rollover_val)) begin
 				flag = 1'b1;
 			end
 			else begin
