@@ -31,7 +31,7 @@ AXIS(
   .clk(clk),
   .rst(rst),
   .upsizing(upsizing),
-	.s_tvalid(s_tvalid),
+  .s_tvalid(s_tvalid),
 	.s_tlast(s_tlast),
 	.s_tready(s_tready),
 	.clear_msg_count(clear_msg_count)
@@ -39,6 +39,7 @@ AXIS(
 
 //=====================DATA BUFFER LOGIC=====================//
 logic msg_full; //tdata is ready to be copy to msg_data?
+logic count_en; //signal to start count if msg is storing
 
 //Data Counter
 msg_counter
@@ -47,8 +48,9 @@ COUNTER(
 	.rst(rst),
 	.s_tvalid(s_tvalid),
   .s_tready(s_tready),
+	.count_en(count_en),
 	.clear(clear_msg_count), 
-	.rollover_val(DATA_BYTES*8),
+	.rollover_val(MAX_MSG_BYTES/2),
 	.msg_length(msg_length),
 	.rollover_flag(msg_full)
 );
@@ -67,9 +69,11 @@ CTRL(
 	.s_tkeep(s_tkeep),
 	.s_tdata(s_tdata),
   .upsizing(upsizing),
+  .msg_full(msg_full),
 	.msg_data(msg_data),
 	.msg_valid(msg_valid),
-	.msg_error(msg_error)
+	.msg_error(msg_error),
+	.count_en(count_en)
 );
 
 endmodule
