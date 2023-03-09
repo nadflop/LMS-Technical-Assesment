@@ -3,14 +3,13 @@
 This repository contains codes and written answers for LMS Technical Assesment.
 
 This is the hierarchy of the msg_parser.sv design:
---'Top level' 
-msg_parser.sv
-(instantiates 3 modules: msg_counter.sv, msg_controller.sv, axi_slave.sv)
------ msg_counter.sv
+### --'Top level' msg_parser.sv
++ instantiates 3 modules: msg_counter.sv, msg_controller.sv, axi_slave.sv
+### ----- msg_counter.sv
 + Count the "byte" size of msg_length
------ msg_controller.sv	
+### ----- msg_controller.sv	
 + Configure data related settings & output
------ axi_slave.sv
+### ----- axi_slave.sv
 + Controls the logic of s_tready signal generation
 
 Steps to simulate the design:
