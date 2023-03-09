@@ -2,7 +2,7 @@
 module tb_msg_parser();
 
 // Define parameters
-localparam CLOCK_PERIOD = 10;
+localparam CLK_PERIOD = 10;
 //localparam PROPAGATION_DELAY;
 parameter TDATA_WIDTH = 64; //bits
 parameter MAX_PKT_LENGTH = 256;
@@ -54,7 +54,7 @@ initial begin
 	tb_clk = 'b0;
 	tb_rst = 'b1;
 end
-initial forever #(CLOCK_PERIOD) tb_clk=~tb_clk;
+initial forever #(CLK_PERIOD) tb_clk=~tb_clk;
 
 //task to set input for msg_parser
 task set_input;
@@ -71,13 +71,14 @@ task set_input;
     if (m_tlast == 1'b1) begin
 	@(posedge tb_clk);
 	tb_tlast = m_tlast;
-	@(negedge tb_clk);
+	@(posedge tb_clk);
 	tb_tlast = ~m_tlast;
     end
     else begin
 	tb_tlast = m_tlast;
     end
-    
+    @(negedge tb_clk);
+    @(posedge tb_clk);
   end
 endtask
 /*
@@ -149,33 +150,50 @@ initial begin
 	//*****************************************************************************
 	// First Data Packet
 	//*****************************************************************************
-	tb_test_case = "1st Data Stream";
+	tb_test_case = "1st Packet";
 	tb_test_num = tb_test_num + 1;
 	set_input(1'b1, 1'b0, 64'habcddcef00080001, 8'b11111111, 1'b0);
-	@(posedge tb_clk);
-	@(posedge tb_clk);
-	@(posedge tb_clk);
-	//*****************************************************************************
-	// Second Data Stream
-	//*****************************************************************************
-	tb_test_case = "2nd Data Stream";
-	tb_test_num = tb_test_num + 1;
 	set_input(1'b1, 1'b1, 64'h00000000630d658d, 8'b00001111, 1'b0);
-	@(posedge tb_clk);
-	@(posedge tb_clk);
-	@(posedge tb_clk);
+
+	//set tvalid to 0 here to seperate diff packet
+	tb_tvalid = 1'b0;
 	@(posedge tb_clk);
 	//*****************************************************************************
-	// Third Data Stream
+	// Second Packet
 	//*****************************************************************************
-	tb_test_case = "3rd Data Stream";
+	tb_test_case = "2nd Packet";
 	tb_test_num = tb_test_num + 1;
 	set_input(1'b1, 1'b0, 64'h045de506000e0002, 8'b11111111, 1'b0);
-	@(posedge tb_clk);	
-	
-//1,0,03889560_84130858,11111111,0
-//1,0,85468052_0008a5b0,11111111,0
-//1,1,00000000_d845a30c,00001111,0
+	set_input(1'b1,1'b0,64'h0388956084130858,8'b11111111,1'b0);
+	set_input(1'b1,1'b0,64'h854680520008a5b0,8'b11111111,1'b0);
+	set_input(1'b1,1'b1,64'h00000000d845a30c,8'b00001111,1'b0);
+
+	tb_tvalid = 1'b0;
+	@(posedge tb_clk);
+	//*****************************************************************************
+	// Third Packet: 1st Data Stream
+	//*****************************************************************************
+	tb_test_case = "3rd Packet";
+	tb_test_num = tb_test_num + 1;
+	set_input(1'b1,1'b0,64'h6262626200080008,8'b11111111,1'b0);
+	set_input(1'b1,1'b0,64'h6868000c62626262,8'b11111111,1'b0);
+	set_input(1'b1,1'b0,64'h6868686868686868,8'b11111111,1'b0);
+	set_input(1'b1,1'b0,64'h70707070000a6868,8'b11111111,1'b0);
+	set_input(1'b1,1'b0,64'h000f707070707070,8'b11111111,1'b0);
+	set_input(1'b1,1'b0,64'h7a7a7a7a7a7a7a7a,8'b11111111,1'b0);
+	set_input(1'b1,1'b0,64'h0e7a7a7a7a7a7a7a,8'b11111111,1'b0);
+	set_input(1'b1,1'b0,64'h4d4d4d4d4d4d4d00,8'b11111111,1'b0);
+	set_input(1'b1,1'b0,64'h114d4d4d4d4d4d4d,8'b11111111,1'b0);
+	set_input(1'b1,1'b0,64'h3838383838383800,8'b11111111,1'b0);
+	set_input(1'b1,1'b0,64'h3838383838383838,8'b11111111,1'b0);
+	set_input(1'b1,1'b0,64'h31313131000b3838,8'b11111111,1'b0);
+	set_input(1'b1,1'b0,64'h0931313131313131,8'b11111111,1'b0);
+	set_input(1'b1,1'b0,64'h5a5a5a5a5a5a5a00,8'b11111111,1'b0);
+	set_input(1'b1,1'b0,64'h0000000000005a5a,8'b00000011,1'b0);
+
+
+	tb_tvalid = 1'b0;
+	@(posedge tb_clk);
 
 
 	$stop;
