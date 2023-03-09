@@ -13,11 +13,10 @@ module msg_controller #(
 	input logic [TKEEP_WIDTH-1:0] s_tkeep,
 	input logic [8*DATA_BYTES-1:0] s_tdata,
   input logic upsizing,
-  input logic msg_full,
 	output logic [8*MAX_MSG_BYTES-1:0] msg_data,
 	output logic msg_valid,
 	output logic msg_error,
-	output logic count_en
+	output logic new_data
 );
 //Data Controller
 //assumption: when upsizing, pad extra bits with '0'
@@ -32,7 +31,7 @@ dataStateType data_ctrl_current_state;
 dataStateType data_ctrl_next_state;
 
 logic [8*MAX_MSG_BYTES-1:0] msg_temp = '0;
-logic [8*MAX_MSG_BYTES-1:0] msg_temp_sync;
+logic msg_valid_temp = 1'b0; //delay the msg_valid signal by one clk cycle
 integer i;
 
 //state assignments for Data Controller
@@ -40,12 +39,12 @@ always_ff @(posedge clk, negedge rst) begin
   if (!rst) begin
     data_ctrl_current_state <= WAIT;
     msg_data <= '0;
-    msg_temp_sync <= '0;
+    msg_valid <= '0;
   end
   else begin
     data_ctrl_current_state <= data_ctrl_next_state;
     msg_data <= msg_temp;
-    msg_temp_sync <= msg_temp;
+    msg_valid <= msg_valid_temp;
   end
 end
 
@@ -67,6 +66,7 @@ always_comb begin
       end
     end
     STORE: begin
+      
       if (s_tlast && s_tuser) begin
         data_ctrl_next_state = ERROR;
       end
@@ -82,31 +82,63 @@ end
 //output logic for Data Controller
 always_comb begin
   msg_temp = msg_data;
-  msg_valid = 1'b0;
+  msg_valid_temp = 1'b0;
   msg_error = 1'b0;
-  count_en = 1'b0;
   case(data_ctrl_current_state)
     WAIT: begin
+      msg_valid_temp = 1'b0;
+      if (s_tvalid && s_tready) begin
+	msg_valid_temp = 1'b1;
+	for (i = 0; i < TKEEP_WIDTH; i = i + 1) begin
+        	// {TKEEP_WIDTH{s_tkeep[i]}} ^~ s_tdata[(8i+7):8i]  
+		if (s_tkeep[i] == 1'b1) begin //keep the byte
+        		msg_temp[(8*i+7)+:8] = s_tdata[(8*i+7) +: 8]; 
+		end
+		else begin
+			msg_temp[(8*i+7)+:8] = '0;
+		end
+      	end
+      	if (upsizing) begin
+        	//set the remaining MSB bits to 0
+        	msg_temp[8*MAX_MSG_BYTES-1:8*(TKEEP_WIDTH-1)+7] = '0;
+      	end
+      end
     end
     STORE: begin
-      //TODO: Add logic where count_enable & msg_valid would only be updated IF there's a new tdata/message
-      for (i = 0; i < TKEEP_WIDTH; i = i + 1) begin
-        // {TKEEP_WIDTH{s_tkeep[i]}} ^~ s_tdata[(8i+7):8i]  
-        msg_temp[(8*i+7)+:8] = {TKEEP_WIDTH{s_tkeep[i]}} ^~ s_tdata[(8*i+7) +: 8]; 
-      end
-      if (upsizing) begin
-        //set the remaining MSB bits to 0
-        msg_temp[8*MAX_MSG_BYTES-1:8*(TKEEP_WIDTH-1)+7] = '0;
-      end
-      if (msg_temp != msg_temp_sync) begin
-      	msg_valid = msg_full;
-      	count_en = 1'b1;
+      msg_valid_temp = 1'b1;
+      if (s_tvalid && s_tready) begin
+	for (i = 0; i < TKEEP_WIDTH; i = i + 1) begin
+        	// {TKEEP_WIDTH{s_tkeep[i]}} ^~ s_tdata[(8i+7):8i]  
+		if (s_tkeep[i] == 1'b1) begin //keep the byte
+        		msg_temp[(8*i+7)+:8] = s_tdata[(8*i+7) +: 8]; 
+		end
+		else begin
+			msg_temp[(8*i+7)+:8] = '0;
+		end
+      	end
+      	if (upsizing) begin
+        	//set the remaining MSB bits to 0
+        	msg_temp[8*MAX_MSG_BYTES-1:8*(TKEEP_WIDTH-1)+7] = '0;
+      	end
       end
     end
     ERROR: begin
       msg_error = 1'b1;
     end
   endcase
+end
+
+//block to check if we received a new data
+always_comb begin
+	new_data = 1'b0;
+	if (s_tvalid && s_tready) begin
+		if (msg_data == msg_temp) begin //if current message data is similar to next message data, then it's not a new data
+			new_data = 1'b0;
+		end
+		else begin
+			new_data = 1'b1;
+		end
+	end
 end
 
 endmodule
