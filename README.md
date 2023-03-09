@@ -13,16 +13,11 @@ This is the hierarchy of the msg_parser.sv design:
 + Controls the logic of s_tready signal generation
 
 ### Steps to simulate the design: ####
-1. Compile the verilog files
-'vlog *.sv'
-2. Open modelsim
-			vsim
-3. Run the simulation command to create a simulation environment
-			vsim -voptargs=+acc work.tb_msg_parser
-4. Add the waveform using .do file
-			do wave.do
-5. Run the simulation
-			run -all
+1. Compile the verilog files: 'vlog *.sv'
+2. Open modelsim: vsim
+3. Run the simulation command to create a simulation environment: vsim -voptargs=+acc work.tb_msg_parser
+4. Add the waveform using .do file: do wave.do
+5. Run the simulation: run -all
 			
 If you made any changes and would like to simulate it again:
 vlog *.sv; restart -f; run -all;
