@@ -12,9 +12,9 @@ This is the hierarchy of the msg_parser.sv design:
 ### axi_slave.sv
 + Controls the logic of s_tready signal generation
 
-Steps to simulate the design:
+### Steps to simulate the design: ####
 1. Compile the verilog files
-			vlog *.sv
+'vlog *.sv'
 2. Open modelsim
 			vsim
 3. Run the simulation command to create a simulation environment
