@@ -4,14 +4,14 @@ This repository contains codes and written answers for LMS Technical Assesment.
 
 This is the hierarchy of the msg_parser.sv design:
 --Top level
-		+ msg_parser.sv
-		  (instantiates 3 modules: msg_counter.sv, msg_controller.sv, axi_slave.sv)
+	+ msg_parser.sv
+	(instantiates 3 modules: msg_counter.sv, msg_controller.sv, axi_slave.sv)
 ----- msg_counter.sv
-						+ Outputs the "byte" size of msg_length
+				+ Count the "byte" size of msg_length
 ----- msg_controller.sv
-						+ Configure data related settings & output
+				+ Configure data related settings & output
 ----- axi_slave.sv
-						+ Controls the logic of s_tready signal generation
+				+ Controls the logic of s_tready signal generation
 
 Steps to simulate the design:
 1. Compile the verilog files
