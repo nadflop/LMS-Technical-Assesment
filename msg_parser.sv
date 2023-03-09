@@ -22,7 +22,7 @@ module msg_parser #(
 
 //variables used by both blocks//
 parameter upsizing = MAX_MSG_BYTES > DATA_BYTES;
-logic clear_msg_count;
+logic new_data;
 
 //=====================AXI-ST SLAVE LOGIC=====================//
 
@@ -33,13 +33,10 @@ AXIS(
   .upsizing(upsizing),
   .s_tvalid(s_tvalid),
 	.s_tlast(s_tlast),
-	.s_tready(s_tready),
-	.clear_msg_count(clear_msg_count)
+	.s_tready(s_tready)
 );
 
 //=====================DATA BUFFER LOGIC=====================//
-logic msg_full; //tdata is ready to be copy to msg_data?
-logic count_en; //signal to start count if msg is storing
 
 //Data Counter
 msg_counter
@@ -48,11 +45,10 @@ COUNTER(
 	.rst(rst),
 	.s_tvalid(s_tvalid),
   .s_tready(s_tready),
-	.count_en(count_en),
-	.clear(clear_msg_count), 
-	.rollover_val(MAX_MSG_BYTES/2),
-	.msg_length(msg_length),
-	.rollover_flag(msg_full)
+	.s_tkeep(s_tkeep),
+	.count_en(new_data),
+	.msg_valid(msg_valid),
+	.msg_length(msg_length)
 );
 
 msg_controller
@@ -69,11 +65,10 @@ CTRL(
 	.s_tkeep(s_tkeep),
 	.s_tdata(s_tdata),
   .upsizing(upsizing),
-  .msg_full(msg_full),
 	.msg_data(msg_data),
 	.msg_valid(msg_valid),
 	.msg_error(msg_error),
-	.count_en(count_en)
+	.new_data(new_data)
 );
 
 endmodule
