@@ -1,54 +1,43 @@
 module msg_counter 
 #(
-  parameter NUM_COUNT_BITS = 16
+  parameter NUM_COUNT_BITS = 16,
+  parameter TKEEP_WIDTH = 8
 )
 (
 	input logic clk,
 	input logic rst,
 	input logic s_tvalid,
 	input logic s_tready,
+	input logic s_tlast,
+	input logic [TKEEP_WIDTH-1:0] s_tkeep, //8 bits length
 	input logic count_en,
-	input logic clear, 
-	input logic [NUM_COUNT_BITS*2-1:0] rollover_val,
-	output logic [NUM_COUNT_BITS-1:0] msg_length,
-	output logic rollover_flag
+	input logic msg_valid,
+	output logic [NUM_COUNT_BITS-1:0] msg_length //assuming length here is in byte
 );
 
 	logic [NUM_COUNT_BITS-1:0] next_count;
-	logic flag;
+	integer i;
 
 	always_ff @ (posedge clk, negedge rst) begin
 		if (!rst) begin
-			msg_length <= 0;
-			rollover_flag <= 0;
+			msg_length <= '0;
 		end
 		else begin
 			msg_length <= next_count;
-			rollover_flag <= flag;
 		end
 	end
 
 	//counter logic
 	always_comb begin
 		next_count = msg_length;
-		flag = rollover_flag;
-		if (clear) begin
-			next_count = 0;
-			flag = 0;
-		end
-		//TODO: want to increment when in state STORE
-		if (s_tvalid && s_tready && count_en) begin //if handshake happens, start the count
-			if (rollover_flag == 1'b1) begin 
-				next_count = 0;
-			end
-			else begin
-				next_count = msg_length + 1'b1;
-			end
-			if ((msg_length + 1 == rollover_val)) begin
-				flag = 1'b1;
-			end
-			else begin
-				flag = 1'b0;
+		if (s_tvalid && s_tready) begin //if handshake happens, start the count
+			if (count_en) begin
+				next_count = '0;
+				for (i = 0; i < TKEEP_WIDTH; i = i + 1) begin
+					if (s_tkeep[i]) begin
+						next_count = next_count + 1'b1;
+					end
+				end
 			end
 		end 
 	end
