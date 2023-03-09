@@ -13,7 +13,7 @@ module msg_parser #(
   input  logic        s_tuser, // Used as an error input signal, valid on tlast
   //outputs from Data Buffer
   output logic                       msg_valid,   // High for one clock to output a message
-  output logic [15:0]                msg_length,  // Length of the message
+  output logic [15:0]                msg_length,  // Length of the message (Assumption: in bytes)
   output logic [8*MAX_MSG_BYTES-1:0] msg_data,    // Data with the LSB on [0]
   output logic                       msg_error,   // Output if issue with the message
   input  logic clk,
