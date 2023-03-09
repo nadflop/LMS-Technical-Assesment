@@ -30,7 +30,6 @@ axi_slave
 AXIS(
   .clk(clk),
   .rst(rst),
-  .upsizing(upsizing),
   .s_tvalid(s_tvalid),
 	.s_tlast(s_tlast),
 	.s_tready(s_tready)

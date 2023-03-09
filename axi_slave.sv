@@ -1,7 +1,6 @@
 module axi_slave (
 	input logic clk,
 	input logic rst,
-	input logic upsizing,
 	input logic s_tvalid,
 	input logic s_tlast,
 	output logic s_tready

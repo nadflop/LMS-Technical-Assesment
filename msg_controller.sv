@@ -63,7 +63,6 @@ always_comb begin
       end
     end
     STORE: begin
-      
       if (s_tlast && s_tuser) begin
         data_ctrl_next_state = ERROR;
       end
