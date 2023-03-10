@@ -57,9 +57,6 @@ always_comb begin
           data_ctrl_next_state = STORE;
         end
       end
-      else begin
-        data_ctrl_next_state = data_ctrl_current_state;
-      end
     end
     STORE: begin
       if (s_tlast && s_tuser) begin
@@ -79,9 +76,6 @@ always_comb begin
           data_ctrl_next_state = STORE;
         end
       end
-      else begin
-      	data_ctrl_next_state = data_ctrl_current_state;
-      end
     end
   endcase
 end
@@ -91,49 +85,33 @@ always_comb begin
   msg_temp = msg_data;
   msg_valid_temp = 1'b0;
   msg_error = 1'b0;
+  //process data here regardless of the state it's in
+  if (s_tvalid && s_tready) begin
+	  for (i = 0; i < TKEEP_WIDTH-1; i = i + 1) begin 
+		  if (s_tkeep[i] == 1'b1) begin //keep the byte
+        msg_temp[(8*i+7)+:8] = s_tdata[(8*i+7) +: 8]; 
+		  end
+		  else begin
+			  msg_temp[(8*i+7)+:8] = '0;
+		  end
+    end
+    if (upsizing) begin
+      //set the remaining MSB bits to 0
+      msg_temp[8*MAX_MSG_BYTES-1:8*(TKEEP_WIDTH-1)+7] = '0;
+    end
+  end
   case(data_ctrl_current_state)
     WAIT: begin
-      msg_valid_temp = 1'b0;
       if (s_tvalid && s_tready) begin
-	      if (!(s_tlast && s_tuser)) begin
-		      msg_valid_temp = 1'b1;
-	      end
-	      for (i = 0; i < TKEEP_WIDTH-1; i = i + 1) begin
-		      if (s_tkeep[i] == 1'b1) begin //keep the byte
-        	  msg_temp[(8*i+7)+:8] = s_tdata[(8*i+7) +: 8]; 
-		      end
-		      else begin
-			      msg_temp[(8*i+7)+:8] = '0;
-		      end
-        end
-        if (upsizing) begin
-          //set the remaining MSB bits to 0
-          msg_temp[8*MAX_MSG_BYTES-1:8*(TKEEP_WIDTH-1)+7] = '0;
-        end
+        msg_valid_temp = 1'b1;
       end
     end
     STORE: begin
       msg_valid_temp = 1'b1;
-      if (s_tvalid && s_tready) begin
-	      if (s_tlast && s_tuser) begin
-		      msg_valid_temp = 1'b1;
-	      end
-	      for (i = 0; i < TKEEP_WIDTH-1; i = i + 1) begin 
-		      if (s_tkeep[i] == 1'b1) begin //keep the byte
-        		msg_temp[(8*i+7)+:8] = s_tdata[(8*i+7) +: 8]; 
-		      end
-		      else begin
-			      msg_temp[(8*i+7)+:8] = '0;
-		      end
-      	end
-      	if (upsizing) begin
-        	//set the remaining MSB bits to 0
-        	msg_temp[8*MAX_MSG_BYTES-1:8*(TKEEP_WIDTH-1)+7] = '0;
-      	end
-      end
     end
     ERROR: begin
       msg_error = 1'b1;
+      msg_temp = '0; //discard the whole packet
     end
   endcase
 end
