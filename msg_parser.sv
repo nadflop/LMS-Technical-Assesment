@@ -22,7 +22,6 @@ module msg_parser #(
 
 //variables used by both blocks//
 logic upsizing = MAX_MSG_BYTES > DATA_BYTES;
-logic new_data;
 
 //=====================AXI-ST SLAVE LOGIC=====================//
 
@@ -46,7 +45,6 @@ COUNTER(
 	.s_tvalid(s_tvalid),
   .s_tready(s_tready),
 	.s_tkeep(s_tkeep),
-	.count_en(new_data),
 	.msg_valid(msg_valid),
 	.msg_length(msg_length)
 );
@@ -67,8 +65,7 @@ CTRL(
   .upsizing(upsizing),
 	.msg_data(msg_data),
 	.msg_valid(msg_valid),
-	.msg_error(msg_error),
-	.new_data(new_data)
+	.msg_error(msg_error)
 );
 
 endmodule

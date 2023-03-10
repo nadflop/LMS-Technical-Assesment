@@ -15,8 +15,7 @@ module msg_controller #(
   input logic upsizing,
 	output logic [8*MAX_MSG_BYTES-1:0] msg_data,
 	output logic msg_valid,
-	output logic msg_error,
-	output logic new_data
+	output logic msg_error
 );
 //Data Controller
 //assumption: when upsizing, pad extra bits with '0' MSB
@@ -137,20 +136,6 @@ always_comb begin
       msg_error = 1'b1;
     end
   endcase
-end
-
-//block to check if we received a new data
-//if current message data is similar to next message data, then it's not a new data
-always_comb begin
-	new_data = 1'b0;
-	if (s_tvalid && s_tready) begin
-		if (msg_data == msg_temp) begin 
-			new_data = 1'b0;
-		end
-		else begin
-			new_data = 1'b1;
-		end
-	end
 end
 
 endmodule

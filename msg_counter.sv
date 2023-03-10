@@ -10,7 +10,6 @@ module msg_counter
 	input logic s_tready,
 	input logic s_tlast,
 	input logic [TKEEP_WIDTH-1:0] s_tkeep, //8 bits length
-	input logic count_en,
 	input logic msg_valid,
 	output logic [NUM_COUNT_BITS-1:0] msg_length //assuming length here is in byte
 );
@@ -31,12 +30,10 @@ module msg_counter
 	always_comb begin
 		next_count = msg_length;
 		if (s_tvalid && s_tready) begin //if handshake happens, start the count
-			if (count_en) begin //if there's a new data, recount the msg length
-				next_count = '0;
-				for (i = 0; i < TKEEP_WIDTH; i = i + 1) begin
-					if (s_tkeep[i]) begin
-						next_count = next_count + 1'b1;
-					end
+			next_count = '0;
+			for (i = 0; i < TKEEP_WIDTH; i = i + 1) begin
+				if (s_tkeep[i]) begin
+					next_count = next_count + 1'b1;
 				end
 			end
 		end 
