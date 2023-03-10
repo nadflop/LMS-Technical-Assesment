@@ -13,12 +13,9 @@ stateType axi_current_state;
 stateType axi_next_state;
 
 //delay the s_tready by one clock cycle
-//logic s_tready_temp;
 logic s_tready_next = 1'b0;
 
-//assign s_tready = s_tready_temp;
-
-//state assignments for AXI Slave interface
+//state assignments for AXI Slave interface, s_tready signal
 always_ff @(posedge clk) begin
   if (!rst) begin
     axi_current_state <= IDLE;
@@ -43,6 +40,7 @@ always_comb begin
       end
     end
     SEND_STREAM: begin
+      //stay in this state as long as the data is valid
       if (s_tvalid && s_tready) begin
         axi_next_state = axi_current_state;
       end
@@ -61,7 +59,7 @@ always_comb begin
       s_tready_next = 1'b1;
       if (s_tvalid && s_tready) begin
       	if (s_tlast) begin
-		s_tready_next = 1'b0;
+		      s_tready_next = 1'b0;
       	end
       	else begin
       		s_tready_next = 1'b1;
@@ -72,7 +70,7 @@ always_comb begin
       s_tready_next = 1'b1;
       if (s_tvalid && s_tready) begin
       	if (s_tlast) begin
-		s_tready_next = 1'b0;
+		      s_tready_next = 1'b0;
       	end
       	else begin
       		s_tready_next = 1'b1;
