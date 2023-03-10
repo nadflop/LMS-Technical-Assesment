@@ -1,0 +1,52 @@
++--------------------------------------------------------------------------------------+
+; Fitter Summary                                                                       ;
++---------------------------------+----------------------------------------------------+
+; Fitter Status                   ; Successful - Thu Mar  9 23:26:29 2023              ;
+; Quartus Prime Version           ; 23.1.0 Internal Build 95 03/02/2023 SC Pro Edition ;
+; Revision Name                   ; msg_parser                                         ;
+; Top-level Entity Name           ; msg_parser                                         ;
+; Family                          ; Agilex 7                                           ;
+; Device                          ; AGFC019R24C2E1V                                    ;
+; Timing Models                   ; Preliminary                                        ;
+; Power Models                    ; Preliminary                                        ;
+; Device Status                   ; Advance                                            ;
+; Logic utilization (in ALMs)     ; 76 / 650,500 ( < 1 % )                             ;
+; Total dedicated logic registers ; 65                                                 ;
+; Total pins                      ; 352 / 648 ( 54 % )                                 ;
+; Total block memory bits         ; 0 / 174,080,000 ( 0 % )                            ;
+; Total RAM Blocks                ; 0 / 8,500 ( 0 % )                                  ;
+; Total DSP Blocks                ; 0 / 1,354 ( 0 % )                                  ;
+; Total eSRAMs                    ; 0 / 1 ( 0 % )                                      ;
+; Total HSSI HPS                  ; 0 / 1 ( 0 % )                                      ;
+; Total PLLs                      ; 0 / 15 ( 0 % )                                     ;
+; Total FMICA_CORE                ; 0 / 2 ( 0 % )                                      ;
++---------------------------------+----------------------------------------------------+
+
++--------------------------------------------------------------------------------------+
+; Setup Summary                                                                        ;
++-------+-------+---------------+--------------------+---------------------------------+
+; Clock ; Slack ; End Point TNS ; Failing End Points ; Worst-Case Operating Conditions ;
++-------+-------+---------------+--------------------+---------------------------------+
+; clk   ; 0.321 ; 0.000         ; 0                  ; Slow vid1 100C Model            ;
++-------+-------+---------------+--------------------+---------------------------------+
+Delay Models:
+Slow vid1 100C Model
+Slow vid1b 100C Model
+Fast vid1a 0C Model
+Fast vid1a 100C Model
+Fast vid1 100C Model
+
+
++--------------------------------------------------------------------------------------+
+; Hold Summary                                                                         ;
++-------+-------+---------------+--------------------+---------------------------------+
+; Clock ; Slack ; End Point TNS ; Failing End Points ; Worst-Case Operating Conditions ;
++-------+-------+---------------+--------------------+---------------------------------+
+; clk   ; 0.103 ; 0.000         ; 0                  ; Fast vid1a 0C Model             ;
++-------+-------+---------------+--------------------+---------------------------------+
+Delay Models:
+Slow vid1 100C Model
+Slow vid1b 100C Model
+Fast vid1a 0C Model
+Fast vid1a 100C Model
+Fast vid1 100C Model
