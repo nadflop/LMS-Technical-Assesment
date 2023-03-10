@@ -31,7 +31,7 @@ module msg_counter
 	always_comb begin
 		next_count = msg_length;
 		if (s_tvalid && s_tready) begin //if handshake happens, start the count
-			if (count_en) begin
+			if (count_en) begin //if there's a new data, recount the msg length
 				next_count = '0;
 				for (i = 0; i < TKEEP_WIDTH; i = i + 1) begin
 					if (s_tkeep[i]) begin

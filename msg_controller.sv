@@ -19,13 +19,10 @@ module msg_controller #(
 	output logic new_data
 );
 //Data Controller
-//assumption: when upsizing, pad extra bits with '0'
+//assumption: when upsizing, pad extra bits with '0' MSB
 //assumption: tlast && tuser can be asserted anytime
-//state: idle/wait, read, store
-//idle/wait: output is all 0 or empty? should it retain prev val?
-//read: do the tkeep processing here (use for loop & if statement)
-//store: set msg_valid
-//error: tuser && tlast, set msg_error
+//state: idle/wait, store, error
+//error: set msg_error
 typedef enum bit [2:0] {WAIT, ERROR, STORE} dataStateType;
 dataStateType data_ctrl_current_state;
 dataStateType data_ctrl_next_state;
@@ -34,7 +31,7 @@ logic [8*MAX_MSG_BYTES-1:0] msg_temp = '0;
 logic msg_valid_temp = 1'b0; //delay the msg_valid signal by one clk cycle
 integer i;
 
-//state assignments for Data Controller
+//state assignments for Data Controller, msg_valid signal
 always_ff @(posedge clk, negedge rst) begin
   if (!rst) begin
     data_ctrl_current_state <= WAIT;
@@ -99,38 +96,36 @@ always_comb begin
     WAIT: begin
       msg_valid_temp = 1'b0;
       if (s_tvalid && s_tready) begin
-	if (!(s_tlast && s_tuser)) begin
-		msg_valid_temp = 1'b1;
-	end
-	for (i = 0; i < TKEEP_WIDTH-1; i = i + 1) begin
-        	// {TKEEP_WIDTH{s_tkeep[i]}} ^~ s_tdata[(8i+7):8i]  
-		if (s_tkeep[i] == 1'b1) begin //keep the byte
-        		msg_temp[(8*i+7)+:8] = s_tdata[(8*i+7) +: 8]; 
-		end
-		else begin
-			msg_temp[(8*i+7)+:8] = '0;
-		end
-      	end
-      	if (upsizing) begin
-        	//set the remaining MSB bits to 0
-        	msg_temp[8*MAX_MSG_BYTES-1:8*(TKEEP_WIDTH-1)+7] = '0;
-      	end
+	      if (!(s_tlast && s_tuser)) begin
+		      msg_valid_temp = 1'b1;
+	      end
+	      for (i = 0; i < TKEEP_WIDTH-1; i = i + 1) begin
+		      if (s_tkeep[i] == 1'b1) begin //keep the byte
+        	  msg_temp[(8*i+7)+:8] = s_tdata[(8*i+7) +: 8]; 
+		      end
+		      else begin
+			      msg_temp[(8*i+7)+:8] = '0;
+		      end
+        end
+        if (upsizing) begin
+          //set the remaining MSB bits to 0
+          msg_temp[8*MAX_MSG_BYTES-1:8*(TKEEP_WIDTH-1)+7] = '0;
+        end
       end
     end
     STORE: begin
       msg_valid_temp = 1'b1;
       if (s_tvalid && s_tready) begin
-	if (s_tlast && s_tuser) begin
-		msg_valid_temp = 1'b1;
-	end
-	for (i = 0; i < TKEEP_WIDTH-1; i = i + 1) begin
-        	// {TKEEP_WIDTH{s_tkeep[i]}} ^~ s_tdata[(8i+7):8i]  
-		if (s_tkeep[i] == 1'b1) begin //keep the byte
+	      if (s_tlast && s_tuser) begin
+		      msg_valid_temp = 1'b1;
+	      end
+	      for (i = 0; i < TKEEP_WIDTH-1; i = i + 1) begin 
+		      if (s_tkeep[i] == 1'b1) begin //keep the byte
         		msg_temp[(8*i+7)+:8] = s_tdata[(8*i+7) +: 8]; 
-		end
-		else begin
-			msg_temp[(8*i+7)+:8] = '0;
-		end
+		      end
+		      else begin
+			      msg_temp[(8*i+7)+:8] = '0;
+		      end
       	end
       	if (upsizing) begin
         	//set the remaining MSB bits to 0
@@ -145,10 +140,11 @@ always_comb begin
 end
 
 //block to check if we received a new data
+//if current message data is similar to next message data, then it's not a new data
 always_comb begin
 	new_data = 1'b0;
 	if (s_tvalid && s_tready) begin
-		if (msg_data == msg_temp) begin //if current message data is similar to next message data, then it's not a new data
+		if (msg_data == msg_temp) begin 
 			new_data = 1'b0;
 		end
 		else begin
