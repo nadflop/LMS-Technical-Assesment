@@ -10,10 +10,10 @@ module msg_counter
 	input logic s_tready,
 	input logic s_tlast,
 	input logic [TKEEP_WIDTH-1:0] s_tkeep, //8 bits length
-	input logic msg_valid,
 	output logic [NUM_COUNT_BITS-1:0] msg_length //assuming length here is in byte
 );
-
+	//assumption: msg counter only resets to 0 when reset is asserted
+	//else, msg counter remains it's previous value
 	logic [NUM_COUNT_BITS-1:0] next_count;
 	integer i;
 

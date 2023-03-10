@@ -45,7 +45,6 @@ COUNTER(
 	.s_tvalid(s_tvalid),
   .s_tready(s_tready),
 	.s_tkeep(s_tkeep),
-	.msg_valid(msg_valid),
 	.msg_length(msg_length)
 );
 

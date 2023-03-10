@@ -16,7 +16,7 @@ stateType axi_next_state;
 logic s_tready_next = 1'b0;
 
 //state assignments for AXI Slave interface, s_tready signal
-always_ff @(posedge clk) begin
+always_ff @(posedge clk, negedge rst) begin
   if (!rst) begin
     axi_current_state <= IDLE;
     s_tready <= 1'b0;
