@@ -171,7 +171,7 @@ initial begin
 	tb_tvalid = 1'b0;
 	@(posedge tb_clk);
 	//*****************************************************************************
-	// Third Packet: 1st Data Stream
+	// Third Packet
 	//*****************************************************************************
 	tb_test_case = "3rd Packet";
 	tb_test_num = tb_test_num + 1;
@@ -191,11 +191,20 @@ initial begin
 	set_input(1'b1,1'b0,64'h5a5a5a5a5a5a5a00,8'b11111111,1'b0);
 	set_input(1'b1,1'b0,64'h0000000000005a5a,8'b00000011,1'b0);
 
-	//If have extra time, add test case when tuser is enabled to see if msg error set to 1
+	tb_tvalid = 1'b0;
+	@(posedge tb_clk);
+	//*****************************************************************************
+	// Packet with Error
+	//*****************************************************************************
+	tb_test_case = "Packet with Error";
+	tb_test_num = tb_test_num + 1;
+	set_input(1'b1,1'b0,64'h6262626200080008,8'b11111111,1'b0);
+	set_input(1'b1,1'b1,64'h6868000c62626262,8'b10100011,1'b1);
 	tb_tvalid = 1'b0;
 	@(posedge tb_clk);
 
-
+	tb_tvalid = 1'b0;
+	@(posedge tb_clk);
 	$stop;
 	
 
